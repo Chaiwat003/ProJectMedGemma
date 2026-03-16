@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedGemma: ผู้ช่วยแพทย์ AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="auth-overlay" class="auth-overlay">
+      <div class="auth-box">
+        <div class="auth-header">
+          <span class="material-icons auth-header-icon">medical_services</span>
+          <h2>MedGemma Login</h2>
+          <p>ระบบผู้ช่วยแพทย์ AI อัจฉริยะ</p>
+        </div>
+
+        <form id="login-form" class="auth-form">
+          <div class="input-group">
+            <span class="material-icons">person</span>
+            <input
+              type="text"
+              id="login-user"
+              placeholder="ชื่อผู้ใช้งาน"
+              aria-label="ชื่อผู้ใช้งาน"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <span class="material-icons">lock</span>
+            <input
+              type="password"
+              id="login-pass"
+              placeholder="รหัสผ่าน"
+              aria-label="รหัสผ่าน"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-full">เข้าสู่ระบบ</button>
+          <p class="auth-switch">
+            ยังไม่มีบัญชี?
+            <button type="button" style="background:none; border:none; padding:0; color:var(--accent); font-weight:500; font-size:inherit; font-family:inherit; cursor:pointer; text-decoration:none;" onclick="toggleAuthMode('register')">สมัครสมาชิก</button>
+          </p>
+        </form>
+
+        <form id="register-form" class="auth-form hidden">
+          <div class="input-group">
+            <span class="material-icons">person_add</span>
+            <input
+              type="text"
+              id="reg-user"
+              placeholder="ตั้งชื่อผู้ใช้งาน"
+              aria-label="ตั้งชื่อผู้ใช้งาน"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <span class="material-icons">email</span>
+            <input type="email" id="reg-email" placeholder="อีเมลแอดเดรส" aria-label="อีเมลแอดเดรส" />
+          </div>
+          <div class="input-group">
+            <span class="material-icons">vpn_key</span>
+            <input
+              type="password"
+              id="reg-pass"
+              placeholder="ตั้งรหัสผ่าน"
+              aria-label="ตั้งรหัสผ่าน"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <span class="material-icons">vpn_key</span>
+            <input
+              type="password"
+              id="reg-pass-confirm"
+              placeholder="ยืนยันรหัสผ่าน"
+              aria-label="ยืนยันรหัสผ่าน"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-full btn-outline">
+            สมัครสมาชิก
+          </button>
+          <p class="auth-switch">
+            มีบัญชีอยู่แล้ว?
+            <button type="button" style="background:none; border:none; padding:0; color:var(--accent); font-weight:500; font-size:inherit; font-family:inherit; cursor:pointer; text-decoration:none;" onclick="toggleAuthMode('login')">เข้าสู่ระบบ</button>
+          </p>
+        </form>
+
+        <form id="otp-form" class="auth-form hidden">
+          <h3 class="auth-title">ยืนยันอีเมล OTP</h3>
+          <p class="auth-desc" id="otp-email-desc">
+            เราได้ส่งรหัส 6 หลักไปที่อีเมลของคุณ
+          </p>
+          <div class="input-group">
+            <span class="material-icons">password</span>
+            <input
+              type="text"
+              id="otp-code"
+              class="otp-input"
+              placeholder="รหัส 6 หลัก"
+              aria-label="รหัส 6 หลัก"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-full">ยืนยันรหัส</button>
+          <p class="auth-switch">
+            <button type="button" style="background:none; border:none; padding:0; color:var(--accent); font-weight:500; font-size:inherit; font-family:inherit; cursor:pointer; text-decoration:none;" onclick="toggleAuthMode('login')"
+              >กลับเข้าสู่ระบบบัญชีอื่น</button
+            >
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <button
+            id="btn-toggle-sidebar"
+            class="btn-icon-only"
+            title="ย่อ/ขยาย เมนู"
+          >
+            <span class="material-icons">menu_open</span>
+          </button>
+
+          <div class="brand-text" id="brand-logo">
+            <span class="material-icons brand-icon">psychology</span>
+            <span>MedGemma</span>
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <button
+            class="nav-btn"
+            id="new-chat-multimodal"
+            onclick="window.location.hash = '#/chat/multimodal'"
+          >
+            <span class="material-icons">image</span>
+            <span class="text">ระบบวิเคราะห์</span>
+          </button>
+
+          <button
+            class="nav-btn"
+            id="new-chat-symptom"
+            onclick="window.location.hash = '#/chat/symptom'"
+          >
+            <span class="material-icons">edit_square</span>
+            <span class="text">ระบบซักประวัติ</span>
+          </button>
+        </div>
+
+        <div class="section recent-list-container">
+          <div class="section-header">ประวัติการสนทนา</div>
+          <div class="recent-list" id="recent-list"></div>
+        </div>
+
+        <div class="sidebar-footer">AI ทางการแพทย์ • เพื่อการศึกษา</div>
+      </aside>
+
+      <main class="main">
+        <div class="user-controls-global">
+          <button
+            id="mobile-menu-btn"
+            class="mobile-menu-btn hidden"
+            aria-label="เปิดเมนู"
+            onclick="
+              document.querySelector('.app').classList.toggle('sidebar-open')
+            "
+          >
+            <span class="material-icons">menu</span>
+          </button>
+
+          <div class="profile-dropdown" id="profile-section">
+            <div class="profile-trigger" id="profile-trigger">
+              <span class="username-text" id="current-user-name"
+                >Loading...</span
+              >
+              <div class="profile-avatar" id="dropdown-avatar">
+                <img
+                  id="dropdown-avatar-img"
+                  class="avatar-img dropdown-avatar-img"
+                  src=""
+                  alt="รูปโปรไฟล์ผู้ใช้งาน"
+                />
+                <span class="material-icons" id="dropdown-avatar-icon"
+                  >person</span
+                >
+              </div>
+            </div>
+
+            <div class="dropdown-menu" id="dropdown-menu">
+              <div class="menu-header">
+                <p>เข้าสู่ระบบโดย</p>
+                <strong id="menu-user-name">User</strong>
+              </div>
+
+              <div class="menu-divider"></div>
+
+              <button
+                id="profile-btn-menu"
+                class="menu-item"
+                onclick="window.location.hash = '#/profile'"
+              >
+                <span class="material-icons menu-icon">person</span>
+                โปรไฟล์ของฉัน
+              </button>
+
+              <button
+                id="settings-btn-menu"
+                class="menu-item"
+                onclick="window.location.hash = '#/settings'"
+              >
+                <span class="material-icons menu-icon">settings</span>
+                ตั้งค่าระบบ
+              </button>
+
+              <button
+                id="theme-toggle-menu"
+                class="menu-item theme-toggle-item"
+              >
+                <span>
+                  <span class="material-icons menu-icon">light_mode</span>
+                  โหมดมืด/สว่าง
+                </span>
+              </button>
+
+              <div class="menu-divider"></div>
+
+              <button id="logout-btn-menu" class="menu-item logout-item">
+                <span class="material-icons menu-icon">logout</span>
+                ออกจากระบบ
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="profile-view" class="profile-view hidden">
+          <div class="profile-content">
+            <div class="profile-header-large">
+              <div
+                class="profile-avatar-large profile-avatar-wrapper"
+                id="profile-avatar-wrapper"
+                onclick="document.getElementById('profile-pic-upload').click()"
+                role="button"
+                tabindex="0"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); document.getElementById('profile-pic-upload').click(); }"
+              >
+                <img
+                  id="profile-pic-preview"
+                  class="avatar-img profile-pic-preview"
+                  src=""
+                  alt="ตัวอย่างรูปโปรไฟล์"
+                />
+                <span class="material-icons" id="profile-pic-icon">account_circle</span>
+                <div class="profile-pic-overlay">
+                  เปลี่ยนรูป
+                </div>
+              </div>
+              <input
+                type="file"
+                id="profile-pic-upload"
+                accept="image/*"
+                hidden
+                onchange="handleProfilePicChange(event)"
+              />
+              <h2 class="profile-username-large" id="profile-page-username">
+                User
+              </h2>
+              <p class="profile-role">ผู้ใช้งานระบบ</p>
+            </div>
+
+            <div class="profile-details-card text-left">
+              <h3 class="section-title">
+                ข้อมูลส่วนตัว
+              </h3>
+              <div class="prompt-setting-group">
+                <label>ชื่อจริง</label>
+                <input
+                  type="text"
+                  id="profile-firstname"
+                  class="prompt-textarea input-sm"
+                  placeholder="ชื่อจริง"
+                />
+              </div>
+              <div class="prompt-setting-group mt-10">
+                <label>นามสกุล</label>
+                <input
+                  type="text"
+                  id="profile-lastname"
+                  class="prompt-textarea input-sm"
+                  placeholder="นามสกุล"
+                />
+              </div>
+              <div class="prompt-setting-group mt-10">
+                <label>เบอร์โทรศัพท์</label>
+                <input
+                  type="text"
+                  id="profile-phone"
+                  class="prompt-textarea input-sm"
+                  placeholder="เบอร์โทรศัพท์"
+                />
+              </div>
+              <div class="prompt-setting-group mt-10">
+                <label>ความเชี่ยวชาญ / ประวัติย่อ</label>
+                <textarea
+                  id="profile-bio"
+                  class="prompt-textarea"
+                  placeholder="นพ.เฉพาะทาง ด้าน..."
+                ></textarea>
+              </div>
+              <button
+                class="btn-full mt-20"
+                onclick="saveProfile()"
+              >
+                บันทึกข้อมูลส่วนตัว
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="settings-view" class="profile-view hidden">
+          <div class="profile-content">
+            <div class="profile-header-large mb-20">
+              <div class="profile-avatar-large settings-avatar">
+                <span class="material-icons settings-icon">settings</span>
+              </div>
+              <h2 class="profile-username-large settings-title">
+                ตั้งค่าระบบ
+              </h2>
+              <p class="profile-role">ปรับแต่งการทำงานของ AI</p>
+            </div>
+
+            <div class="profile-details-card">
+              <h3 class="section-title bold">
+                ตั้งค่า Prompt (System Instructions)
+              </h3>
+
+              <div class="prompt-setting-group">
+                <label
+                  for="setting-symptom-prompt"
+                  class="setting-label"
+                  >Prompt ระบบซักประวัติ</label
+                >
+                <textarea
+                  id="setting-symptom-prompt"
+                  class="prompt-textarea"
+                ></textarea>
+              </div>
+
+              <div class="prompt-setting-group mt-16">
+                <label
+                  for="setting-vision-prompt"
+                  class="setting-label"
+                  >Prompt ระบบวิเคราะห์รูปภาพ</label
+                >
+                <textarea
+                  id="setting-vision-prompt"
+                  class="prompt-textarea"
+                ></textarea>
+              </div>
+
+              <div class="btn-group mt-16">
+                <button
+                  class="btn-full mt-0"
+                  onclick="savePrompts()"
+                >
+                  บันทึก Prompt
+                </button>
+                <button
+                  class="btn-full btn-outline mt-0"
+                  onclick="resetPrompts()"
+                >
+                  คืนค่าเริ่มต้น
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="landing-view" class="landing-view">
+          <div class="landing-content">
+            <div class="landing-icon">
+              <span class="material-icons landing-icon-large">psychology</span>
+            </div>
+            <h1 class="landing-title">
+              สวัสดี <span class="gradient-text">MedGemma</span>
+            </h1>
+            <p class="landing-subtitle">ผู้ช่วยแพทย์ AI อัจฉริยะ</p>
+            <div class="landing-cards">
+              <div
+                class="card-btn"
+                role="button"
+                tabindex="0"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); document.getElementById('landing-file-input').click(); }"
+                onclick="document.getElementById('landing-file-input').click()"
+              >
+                <div class="card-icon">
+                  <span class="material-icons">add_photo_alternate</span>
+                </div>
+                <div class="card-text">
+                  <h3>อัปโหลดรูปวิเคราะห์</h3>
+                  <p>เลือกรูป X-ray หรือผลแล็บ <br />เพื่อวิเคราะห์ทันที</p>
+                </div>
+                <input
+                  type="file"
+                  id="landing-file-input"
+                  accept="image/*"
+                  hidden
+                />
+              </div>
+
+              <div class="card-btn" role="button" tabindex="0" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); startChat('symptom_check'); }" onclick="startChat('symptom_check')">
+                <div class="card-icon">
+                  <span class="material-icons">edit_note</span>
+                </div>
+                <div class="card-text">
+                  <h3>ซักประวัติอาการ</h3>
+                  <p>พูดคุยเพื่อประเมินอาการเบื้องต้น</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-panel hidden" id="chat-panel">
+          <header class="chat-header">
+            <div class="chat-header-left">
+              <span class="material-icons">medical_services</span>
+              <div>
+                <div class="chat-header-title">ผู้ช่วยแพทย์ MedGemma</div>
+                <div class="chat-header-sub">
+                  ใช้โมเดล Google Gemini • ตอบเป็นภาษาไทย
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div class="history" id="history"></div>
+
+          <div class="previews" id="previews"></div>
+
+          <footer class="composer">
+            <div class="voice-pill">
+              <button
+                class="voice-btn"
+                id="btn-voice-mode"
+                title="เปิด/ปิด โหมดคุยต่อเนื่อง (Hands-free)"
+              >
+                <span class="material-icons">graphic_eq</span>
+              </button>
+              <button
+                class="voice-btn"
+                id="btn-mic"
+                title="กดเพื่อพูดข้อความนี้"
+              >
+                <span class="material-icons mic-icon-sm">mic</span>
+              </button>
+            </div>
+
+            <label
+              class="file-label"
+              id="file-input-label"
+              for="file-input"
+              title="แนบรูปภาพ X-ray/ผลแล็บ"
+            >
+              <span class="material-icons">attach_file</span>
+            </label>
+            <input id="file-input" type="file" accept="image/*" multiple />
+
+            <textarea
+              id="prompt"
+              placeholder="พิมพ์ข้อความที่นี่..."
+            ></textarea>
+
+            <button id="send" class="send-btn" disabled title="ส่งข้อความ">
+              <span class="material-icons">send</span>
+            </button>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        if (typeof showLandingPage === "function") {
+          showLandingPage();
+        }
+      });
+    </script>
+  </body>
+</html>

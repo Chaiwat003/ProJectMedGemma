@@ -1,0 +1,940 @@
+/* --- 1. ค่าสีเริ่มต้น (Dark Mode) --- */
+:root {
+    --bg-color: #020617;
+    --panel: #020617;
+    --muted: #94a3b8;
+    --text: #e5e7eb;
+    --accent: #22c55e;
+    --card: #020617;
+    --border-subtle: rgba(148,163,184,0.25);
+    --bubble-user: rgba(15, 23, 42, 0.8);
+    --bubble-assistant: rgba(15,23,42,0.98);
+    
+    /* ตัวแปรกล่องภายใน */
+    --section-bg: rgba(15,23,42,0.92);
+    --input-bg: rgba(15,23,42,0.5);
+    --pill-bg: rgba(15, 23, 42, 0.6);
+    
+    /* [ใหม่] ตัวแปรสำหรับกล่อง Landing Page */
+    --landing-card-bg: rgba(30, 41, 59, 0.4);
+    --landing-card-border: rgba(148,163,184,0.1);
+    --sidebar-border: rgba(30,64,175,0.6); /* ขอบสีน้ำเงินเข้มสำหรับโหมดมืด */
+}
+
+/* --- 2. ค่าสีโหมดสว่าง (Light Mode) --- ปรับจูนให้สวยคลีน */
+[data-theme="light"] {
+    --bg-color: #f3f4f6;       /* เทาที่สว่างขึ้นอีกนิด ดูสะอาด */
+    --panel: #ffffff;
+    --muted: #64748b;
+    --text: #1e293b;           /* สีเทาเข้ม (ไม่ดำสนิท) อ่านสบายตากว่า */
+    --accent: #16a34a;
+    --card: #ffffff;
+    --border-subtle: #e2e8f0;
+    --bubble-user: #dcfce7;
+    --bubble-assistant: #ffffff;
+
+    /* กล่องภายในโหมดสว่าง */
+    --section-bg: #f8fafc;
+    --input-bg: #f1f5f9;
+    --pill-bg: #e2e8f0;
+
+    /* [ใหม่] ปรับกล่อง Landing Page ให้เป็นสีขาวมีเงา */
+    --landing-card-bg: #ffffff;
+    --landing-card-border: #e2e8f0;
+    --sidebar-border: #e2e8f0; /* ขอบสีเทาอ่อนสำหรับโหมดสว่าง */
+}
+
+/* ปรับสีพื้นหลัง Body */
+body {
+    background: var(--bg-color);
+    color: var(--text);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: "Sarabun", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* --- Layout Grid --- */
+.app {
+    display: grid;
+    grid-template-columns: 260px minmax(0,1fr);
+    transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100vh;
+    padding: 12px;
+    box-sizing: border-box;
+    gap: 16px;
+}
+
+.app.sidebar-collapsed {
+    grid-template-columns: 80px minmax(0,1fr);
+}
+
+.main {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    background: var(--panel);
+    border-radius: 18px;
+    /* แก้ไข: ใช้ตัวแปรขอบ เพื่อไม่ให้โหมดสว่างดูแข็งเกินไป */
+    border: 1px solid var(--sidebar-border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05); /* ลดเงาลงให้ดูนุ่ม */
+    
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 40px;
+    justify-content: flex-start;
+}
+
+.btn-icon-only {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.btn-icon-only:hover {
+    background: var(--border-subtle); /* ปรับให้ใช้ตัวแปร */
+    color: var(--text);
+}
+
+.brand-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s;
+    color: var(--text);
+    
+    /* ✅ เพิ่มบรรทัดนี้เพื่อให้เมาส์เปลี่ยนเป็นรูปมือ */
+    cursor: pointer; 
+}
+
+.brand-text:hover {
+    opacity: 0.8; /* (เสริม) ลดความทึบลงนิดหน่อยตอนเอาเมาส์ชี้ */
+}
+
+.nav-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid transparent; /* ซ่อนขอบปกติ */
+    border-radius: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 48px;
+}
+.nav-btn:hover {
+    background: var(--border-subtle);
+    color: var(--text);
+}
+.nav-btn.active {
+    border-color: var(--accent);
+    color: var(--text);
+    /* ใช้เทคนิคผสมสี ให้ดูสวยทั้งมืดและสว่าง */
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.nav-btn .material-icons {
+    font-size: 24px;
+    min-width: 24px;
+}
+
+/* ประวัติการสนทนา */
+.sidebar .section {
+    background: var(--section-bg);
+    border-radius: 12px;
+    padding: 10px;
+    /* แก้ไข: ใช้ขอบที่นุ่มลง */
+    border: 1px solid var(--border-subtle);
+}
+.section-header {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.recent-list-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: auto;
+}
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.recent-chat-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.recent-chat-btn:hover { background: var(--border-subtle); }
+/* ค้นหาและแก้ทับส่วนนี้ครับ */
+.recent-chat-btn.active {
+    /* ใส่ขอบสีเขียว */
+    border-color: var(--accent);
+    
+    /* เปลี่ยนสีตัวหนังสือเป็นสีเขียวด้วย (จะได้เด่น) */
+    color: var(--accent);
+    font-weight: 500;
+    
+    /* เปลี่ยนพื้นหลังให้สว่างขึ้น (ใช้สูตรเดียวกับปุ่มหลัก) */
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    
+    /* เพิ่มเงาเล็กน้อย */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.recent-chat-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.delete-chat-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+}
+.delete-chat-btn:hover { color: #fecaca; }
+.sidebar-footer {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+/* Collapsed Mode */
+.app.sidebar-collapsed .sidebar-header,
+.app.sidebar-collapsed .nav-buttons {
+    justify-content: center;
+    align-items: center;
+}
+.app.sidebar-collapsed .brand-text,
+.app.sidebar-collapsed .nav-btn .text,
+.app.sidebar-collapsed .section-header, 
+.app.sidebar-collapsed .recent-list-container, 
+.app.sidebar-collapsed .sidebar-footer {
+    display: none !important;
+    opacity: 0;
+}
+.app.sidebar-collapsed .nav-btn {
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+}
+
+/* --- CHAT PANEL --- */
+.chat-panel {
+    background: var(--panel);
+    border-radius: 18px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 24px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    position: relative;
+    /* Subtle background pattern */
+    background-image: radial-gradient(var(--border-subtle) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+.chat-panel.hidden { display: none !important; }
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--panel);
+}
+.chat-header-left { display: flex; align-items: center; gap: 10px; }
+.chat-header-left .material-icons {
+    font-size: 24px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, transparent); /* ปรับให้สวยทั้งสองโหมด */
+    border-radius: 999px;
+    padding: 6px;
+}
+.chat-header-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.chat-header-sub { font-size: 12px; color: var(--muted); }
+
+.history {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 20px 12px 20px;
+    scroll-behavior: smooth;
+}
+
+/* Messages */
+.message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    max-width: 780px;
+    margin: 0;
+    animation: msgFadeIn 0.3s ease-out;
+}
+@keyframes msgFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.message.assistant { align-self: flex-start; }
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a5f, #0f4c81);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7dd3fc;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+    border: 2px solid rgba(125, 211, 252, 0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.message.user .avatar {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 60%, #1e293b), color-mix(in srgb, var(--accent) 30%, #0f172a));
+    color: white;
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.bubble {
+    position: relative;
+    padding: 12px 16px;
+    border-radius: 18px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 14.5px;
+    max-width: 100%;
+}
+/* Assistant Bubble */
+.message.assistant .bubble { 
+    background: var(--bubble-assistant);
+    color: var(--text);
+    border: 1px solid var(--border-subtle);
+    border-bottom-left-radius: 4px;
+    padding-right: 38px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+/* User Bubble */
+.message.user .bubble {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 85%, #1e293b), color-mix(in srgb, var(--accent) 60%, #0f172a));
+    color: white;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+[data-theme="light"] .message.user .bubble {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.3);
+}
+[data-theme="light"] .message.assistant .bubble {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.bubble img {
+    max-width: 260px;
+    border-radius: 12px;
+    display: block;
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.copy-btn {
+    position: absolute; top: 8px; right: 8px; width: 22px; height: 22px;
+    background: transparent; border: none; color: var(--muted);
+    cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; opacity: 0;
+}
+.message.assistant:hover .copy-btn { opacity: 0.5; }
+.copy-btn:hover { background: var(--border-subtle); color: var(--text); opacity: 1 !important; }
+
+/* Composer */
+.composer {
+    display: flex; gap: 8px; align-items: flex-end;
+    padding: 12px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 24px;
+    margin: 0 20px 20px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+.voice-pill {
+    display: flex; align-items: center;
+    background: var(--pill-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px; padding: 4px; margin-right: 4px;
+}
+.voice-btn {
+    width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent;
+    color: var(--muted); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+}
+.voice-btn:hover { background: var(--border-subtle); color: var(--text); }
+.voice-btn.voice-active {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent) !important;
+    border: 1px solid var(--accent);
+}
+.voice-btn.listening { color: #ef4444 !important; animation: pulse-red 1.5s infinite; }
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.eq-bars { display: flex; gap: 3px; align-items: center; height: 20px; }
+.eq-bars div { width: 4px; background: #4ade80; animation: eqMove 0.8s infinite ease-in-out; }
+.eq-bars div:nth-child(1){ height: 8px; animation-delay: 0s; }
+.eq-bars div:nth-child(2){ height: 14px; animation-delay: 0.1s; }
+.eq-bars div:nth-child(3){ height: 6px; animation-delay: 0.2s; }
+.eq-bars div:nth-child(4){ height: 10px; animation-delay: 0.3s; }
+@keyframes eqMove { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.8); } }
+
+#file-input { display: none; }
+.file-label, .send-btn {
+    background: transparent; border: 1px solid var(--border-subtle);
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all 0.2s;
+}
+.file-label:hover { background: var(--border-subtle); color: var(--text); }
+.send-btn.enabled {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+    transform: translateY(-2px);
+}
+.send-btn.enabled:active {
+    transform: translateY(0);
+}
+.send-btn.stop-active {
+    border-color: #ef4444 !important; color: #fff !important;
+    background: #ef4444 !important;
+}
+textarea#prompt {
+    flex: 1; height: 40px; min-height: 40px; max-height: 120px; resize: none;
+    padding: 10px 16px; line-height: 20px; box-sizing: border-box;
+    border-radius: 22px; border: 1px solid var(--border-subtle);
+    background: var(--input-bg); color: var(--text); font-size: 14px; overflow-y: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea#prompt.scroll-active { overflow-y: auto; }
+textarea#prompt:focus { 
+    outline: none; 
+    border-color: var(--accent); 
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.previews { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 16px 10px 16px; }
+.preview { position: relative; width: 100px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
+.preview img { width: 100%; height: 100%; object-fit: cover; }
+.preview .rm {
+    position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7);
+    color: #fff; width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;
+}
+.spinner {
+    border: 3px solid var(--border-subtle); border-top: 3px solid var(--accent);
+    border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+button:disabled {
+    opacity: 0.3 !important; cursor: not-allowed !important; pointer-events: none !important; filter: grayscale(100%);
+}
+
+/* Landing View */
+.landing-view {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    height: 100%; text-align: center; animation: fadeIn 0.5s ease-out;
+}
+.landing-content { max-width: 600px; width: 100%; padding: 20px; }
+.landing-icon span {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-radius: 50%; padding: 20px; color: var(--accent); margin-bottom: 20px;
+}
+.landing-title {
+    font-size: 48px; font-weight: 600; margin: 0 0 10px 0; color: var(--text); letter-spacing: -1px;
+}
+.gradient-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #22c55e 100%);
+    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.landing-subtitle {
+    color: var(--muted); font-size: 18px; margin-bottom: 40px; font-weight: 300;
+}
+.landing-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px; margin-top: 20px;
+}
+.card-btn {
+    /* แก้ไข: ใช้ตัวแปรสี เพื่อให้โหมดสว่างเป็นสีขาว ไม่ดำ */
+    background: var(--landing-card-bg);
+    border: 1px solid var(--landing-card-border);
+    padding: 20px; border-radius: 16px; cursor: pointer; text-align: left;
+    transition: all 0.2s ease; display: flex; align-items: center; gap: 16px;
+}
+.card-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px); 
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05); /* เงาเบาๆ */
+}
+.card-icon span {
+    font-size: 28px; color: var(--accent); 
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    padding: 10px; border-radius: 12px;
+}
+.card-text h3 { margin: 0 0 4px 0; font-size: 16px; color: var(--text); }
+.card-text p { margin: 0; font-size: 13px; color: var(--muted); }
+.card-text p { margin: 0; font-size: 13px; color: var(--muted); }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.hidden { display: none !important; }
+
+/* --- Profile View --- */
+.profile-view {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    height: 100%; padding: 40px 20px; overflow-y: auto;
+    animation: fadeIn 0.4s ease-out;
+}
+.profile-content {
+    max-width: 500px; width: 100%;
+}
+.profile-header-large {
+    text-align: center; margin-bottom: 30px;
+}
+.profile-avatar-large {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent); display: inline-flex; align-items: center; justify-content: center;
+    border: 3px solid var(--accent); margin-bottom: 16px;
+}
+.profile-avatar-large .material-icons {
+    font-size: 50px;
+}
+.profile-username-large {
+    font-size: 28px; font-weight: 600; color: var(--text); margin: 0 0 5px 0;
+}
+.profile-role {
+    color: var(--muted); font-size: 15px; margin: 0;
+}
+.profile-details-card {
+    background: var(--panel); border-radius: 16px; border: 1px solid var(--border-subtle);
+    padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: left;
+}
+.profile-detail-item {
+    display: flex; align-items: center; gap: 16px; padding: 12px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.profile-detail-item:last-child {
+    border-bottom: none; padding-bottom: 0;
+}
+.profile-detail-item .material-icons {
+    color: var(--muted); font-size: 24px;
+    background: var(--input-bg); padding: 10px; border-radius: 12px;
+}
+.detail-text {
+    display: flex; flex-direction: column;
+}
+.detail-text label {
+    font-size: 12px; color: var(--muted); margin-bottom: 4px;
+}
+.detail-text span {
+    font-size: 16px; color: var(--text); font-weight: 500;
+}
+
+/* --- Settings / Prompts --- */
+.prompt-setting-group {
+    display: flex; flex-direction: column;
+}
+.prompt-textarea {
+    width: 100%; height: 120px; resize: vertical;
+    padding: 12px; border-radius: 12px; border: 1px solid var(--border-subtle);
+    background: var(--input-bg); color: var(--text); font-size: 13px;
+    font-family: inherit; line-height: 1.5; box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+.prompt-textarea:focus {
+    outline: none; border-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; padding: 0; }
+    
+    .sidebar { 
+        position: fixed; left: 0; top: 0; height: 100vh; z-index: 1000;
+        transform: translateX(-100%); transition: transform 0.3s ease;
+        border-radius: 0; width: 280px; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        display: flex;
+    }
+    .app.sidebar-open .sidebar { transform: translateX(0); }
+    
+    .mobile-menu-btn { display: flex !important; margin-right: auto; }
+    
+    .chat-panel { height: 100vh; border-radius: 0; border: none; }
+    
+    .user-controls-global { left: 16px; display: flex; align-items: center; justify-content: space-between; right: 16px; top: 12px; }
+    
+    .profile-dropdown { margin-left: auto; }
+
+    /* Fix header overlap with hamburger menu } */
+    .chat-header {
+        padding: 16px 72px !important;
+        min-height: 64px;
+    }
+    .chat-header-title { font-size: 14px !important; }
+    .chat-header-sub { 
+        font-size: 10px !important; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        max-width: 150px; 
+    }
+    .chat-header-left { gap: 8px !important; }
+    .chat-header-left .material-icons { 
+        font-size: 20px !important; 
+        width: 32px !important; 
+        height: 32px !important; 
+    }
+
+    .profile-view { padding: 80px 16px 20px 16px; }
+    .profile-avatar-large { width: 80px; height: 80px; }
+    .profile-avatar-large .material-icons { font-size: 40px; }
+    .profile-username-large { font-size: 22px; }
+    
+    .landing-title { font-size: 32px; }
+    .landing-subtitle { font-size: 16px; margin-bottom: 24px; }
+    .card-btn { flex-direction: column; text-align: center; gap: 8px; }
+
+    /* Hide username on mobile to save space */
+    .profile-trigger .username-text { display: none; }
+    .profile-trigger { padding: 0; border: none; }
+}
+
+/* Animation ปุ่มเมนู */
+#btn-toggle-sidebar .material-icons { transition: transform 0.3s ease; }
+.app.sidebar-collapsed #btn-toggle-sidebar .material-icons { transform: scaleX(-1); }
+
+/* --- สไตล์ปุ่มไอคอนโปร่งใส (สำหรับปุ่มเปลี่ยนธีม) --- */
+.btn-ghost-icon {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-ghost-icon:hover {
+    background: var(--border-subtle);
+    color: var(--text);
+}
+
+/* --- Authentication Styles --- */
+.auth-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-color);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+}
+.auth-overlay.hidden { display: none !important; }
+
+.auth-box {
+    background: var(--panel);
+    border: 1px solid var(--border-subtle);
+    padding: 40px; border-radius: 24px;
+    width: 100%; max-width: 380px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+
+.auth-header h2 { margin: 10px 0 5px; color: var(--text); }
+.auth-header p { color: var(--muted); margin-bottom: 30px; font-size: 14px; }
+
+.input-group {
+    position: relative; margin-bottom: 16px;
+}
+.input-group .material-icons {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 20px;
+}
+.input-group input {
+    width: 100%; padding: 12px 12px 12px 44px;
+    background: var(--input-bg); border: 1px solid var(--border-subtle);
+    border-radius: 12px; color: var(--text); font-size: 15px;
+    box-sizing: border-box; outline: none; transition: border-color 0.2s;
+}
+.input-group input:focus { border-color: var(--accent); }
+
+.btn-full {
+    width: 100%; padding: 12px; border: none; border-radius: 12px;
+    background: var(--accent); color: white; font-size: 16px; font-weight: 600;
+    cursor: pointer; margin-top: 10px; transition: opacity 0.2s;
+}
+.btn-full:hover { opacity: 0.9; }
+.btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+.btn-outline:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); opacity: 1; }
+
+.auth-switch { margin-top: 20px; font-size: 14px; color: var(--muted); }
+.auth-switch a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+/* --- Profile Dropdown Styles --- */
+.chat-header-right {
+    position: relative;
+    z-index: 100;
+}
+
+.profile-dropdown {
+    position: relative;
+}
+
+/* ส่วนแสดงชื่อและรูปโปรไฟล์ที่คลิกได้ */
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 24px;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+}
+
+.profile-trigger:hover {
+    background: var(--border-subtle);
+    border-color: var(--border-subtle);
+}
+
+.username-text {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-avatar {
+    width: 36px;
+    height: 36px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-color);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* ตัวเมนู Dropdown */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px); /* เว้นระยะห่างจากด้านบนนิดหน่อย */
+    right: 0;
+    width: 220px;
+    background: var(--panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+/* คลาสสำหรับแสดงเมนู (จะถูกเพิ่มด้วย JS) */
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* รายการในเมนู */
+.menu-header {
+    padding: 12px 16px;
+}
+.menu-header p { margin: 0; font-size: 12px; color: var(--muted); }
+.menu-header strong { display: block; font-size: 15px; color: var(--text); margin-top: 4px; }
+
+.menu-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 8px 0;
+}
+
+.menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 12px;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background: var(--border-subtle);
+}
+
+.menu-icon {
+    font-size: 20px;
+    color: var(--muted);
+}
+
+.logout-item { color: #ef4444; }
+.logout-item .menu-icon { color: #ef4444; }
+.logout-item:hover { background: #fef2f2; }
+[data-theme="dark"] .logout-item:hover { background: rgba(239, 68, 68, 0.1); }
+
+/* ซ่อนในหน้า Landing */
+.landing-view .chat-header-right { display: none; }
+
+/* --- Global User Controls (เมนูโปรไฟล์มุมขวาบน) --- */
+.user-controls-global {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    z-index: 100; /* ให้ลอยอยู่เหนือทุกอย่าง */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-menu-btn {
+    background: var(--panel); border: 1px solid var(--border-subtle);
+    border-radius: 12px; width: 40px; height: 40px; color: var(--text);
+    display: none; align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 101;
+}
+
+/* ปรับระยะ Chat Header เดิมให้น้อยลง เพราะย้ายปุ่มออกไปแล้ว */
+.chat-header {
+    justify-content: flex-start; /* จัดชิดซ้าย */
+    padding-right: 60px; /* เว้นที่ว่างทางขวาเผื่อเมนูโปรไฟล์บัง */
+}
+
+/* ลบ CSS ที่เคยสั่งซ่อนในหน้า Landing (ถ้ามี) */
+.landing-view .chat-header-right { 
+    display: block !important; 
+}
+
+/* ปรับแต่งเมนู Dropdown ให้ไม่ตกขอบ */
+.dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+/* --- Polish Utilities & Components --- */
+.auth-header-icon { font-size: 48px; color: var(--accent); }
+.auth-title { margin-bottom: 8px; }
+.auth-desc { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.otp-input { text-align: center; letter-spacing: 4px; font-weight: bold; }
+.brand-icon { color: var(--accent); }
+
+.avatar-img { display: none; width: 100%; height: 100%; object-fit: cover; }
+.dropdown-avatar-img { border-radius: 50%; }
+.profile-pic-preview { position: absolute; top: 0; left: 0; }
+.profile-pic-overlay {
+    position: absolute; bottom: 0; background: rgba(0, 0, 0, 0.5);
+    width: 100%; font-size: 10px; color: white; text-align: center; padding: 2px 0;
+}
+.profile-avatar-wrapper { cursor: pointer; overflow: hidden; position: relative; }
+
+.text-left { text-align: left; }
+.section-title { margin-top: 0; margin-bottom: 16px; font-size: 16px; font-weight: 500;}
+.section-title.bold { font-weight: 600; color: var(--text); }
+.input-sm { height: 40px; }
+
+.settings-avatar { width: 80px; height: 80px; border-width: 2px; }
+.settings-icon { font-size: 40px; }
+.settings-title { font-size: 24px; }
+.setting-label { display: block; color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+
+.landing-icon-large { font-size: 48px; }
+.mic-icon-sm { font-size: 20px; }
+.btn-group { display: flex; gap: 10px; }
+
+/* Spacing Helpers */
+.mt-0 { margin-top: 0 !important; }
+.mt-10 { margin-top: 10px !important; }
+.mt-16 { margin-top: 16px !important; }
+.mt-20 { margin-top: 20px !important; }
+.mb-20 { margin-bottom: 20px !important; }
