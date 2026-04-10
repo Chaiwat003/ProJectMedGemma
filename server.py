@@ -1,7 +1,7 @@
 import uvicorn
 import httpx
 import json
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -9,6 +9,10 @@ from typing import List, Optional, Dict, Any
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 import jwt
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import secrets
 
 # --- 1. MySQL Setup ---
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Text, Boolean
@@ -42,7 +46,7 @@ class OTPDB(Base):
     __tablename__ = "otp_codes"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), index=True)
-    otp_code = Column(String(10))
+    otp_code = Column(String(100))
     expires_at = Column(DateTime)
 
 class UserProfileDB(Base):
@@ -117,6 +121,13 @@ app = FastAPI()
 SECRET_KEY = "medgemma_secret_key"
 ALGORITHM = "HS256"
 
+# --- SMTP Config ---
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USERNAME = "medgemma.noreply@gmail.com"
+SMTP_PASSWORD = "kbrykdmfixzmgkjy"
+TURNSTILE_SECRET_KEY = "0x4AAAAAAC5K1oz7MF5glndb0hWD8FaQvNw"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -133,14 +144,14 @@ class UserRegister(BaseModel):
     username: str
     password: str
     email: str
+    turnstile_token: str
 
 class UserLogin(BaseModel):
     username: str
     password: str
 
-class OTPVerify(BaseModel):
-    email: str
-    otp_code: str
+class VerifyEmailRequest(BaseModel):
+    token: str
 
 class ProfileSchema(BaseModel):
     first_name: Optional[str] = None
@@ -194,12 +205,87 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(401, detail="Token invalid")
 
 # --- API Endpoints ---
+def send_verification_email(receiver_email: str, token: str):
+    try:
+        if SMTP_USERNAME == "your_email@gmail.com":
+            print(f"Skipping email since credentials are not set. Token is: {token}")
+            return
+        
+        msg = MIMEMultipart("alternative")
+        msg["From"] = f"MedGemma <{SMTP_USERNAME}>"
+        msg["To"] = receiver_email
+        msg["Subject"] = "ยืนยันอีเมลสำหรับบัญชี MedGemma ของคุณ"
+        
+        verify_url = f"http://localhost:5500/#/verify?token={token}"
+        
+        html_body = f"""
+        <html>
+          <body style="margin:0;padding:0;background:#0f0f13;font-family:'Sarabun',Arial,sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+              <tr>
+                <td align="center">
+                  <table width="520" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+                    <tr>
+                      <td style="background:linear-gradient(135deg,#1a73e8,#0d47a1);padding:32px;text-align:center;">
+                        <span style="font-size:40px;">&#127973;</span>
+                        <h1 style="color:#ffffff;margin:12px 0 4px;font-size:22px;font-weight:600;">MedGemma</h1>
+                        <p style="color:rgba(255,255,255,0.75);margin:0;font-size:13px;">ผู้ช่วยแพทย์ AI อัจฉริยะ</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:36px 40px;text-align:center;">
+                        <h2 style="color:#e0e0e0;font-size:18px;margin:0 0 12px;">ยืนยันที่อยู่อีเมลของคุณ</h2>
+                        <p style="color:#9e9e9e;font-size:14px;line-height:1.7;margin:0 0 28px;">
+                          คุณได้สมัครสมาชิกกับระบบ MedGemma เรียบร้อยแล้ว<br>
+                          กดปุ่มด้านล่างเพื่อยืนยันอีเมลและเปิดใช้งานบัญชีของคุณ
+                        </p>
+                        <a href="{verify_url}" style="display:inline-block;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:600;letter-spacing:0.5px;">
+                          &#10003; &nbsp;ยืนยันอีเมล
+                        </a>
+                        <p style="color:#616161;font-size:12px;margin:28px 0 0;line-height:1.6;">
+                          ลิงก์นี้จะหมดอายุใน <strong style="color:#9e9e9e;">24 ชั่วโมง</strong><br>
+                          หากคุณไม่ได้สมัครสมาชิก สามารถเพิกเฉยต่ออีเมลนี้ได้เลยครับ
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:16px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+                        <p style="color:#424242;font-size:11px;margin:0;">© 2026 MedGemma &nbsp;•&nbsp; AI ทางการแพทย์เพื่อการศึกษา</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_body, "html"))
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
 @app.get("/")
 def read_root():
     return {"status": "ok", "message": "MedGemma API (Ollama Mode) Running"}
 
 @app.post("/api/auth/register")
-def register(user: UserRegister, db: Session = Depends(get_db)):
+async def register(user: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    # 1. Verify Turnstile
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data={"secret": TURNSTILE_SECRET_KEY, "response": user.turnstile_token}
+        )
+        cf_data = res.json()
+        if not cf_data.get("success"):
+            raise HTTPException(400, detail="ไม่ผ่านการยืนยันตัวตนแบบมนุษย์ (Bot Detected)")
+
     if db.query(UserDB).filter(UserDB.username == user.username).first():
         raise HTTPException(400, detail="ชื่อผู้ใช้นี้ถูกใช้แล้ว")
     if db.query(UserDB).filter(UserDB.email == user.email).first():
@@ -218,47 +304,43 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     
-    # Generate OTP
-    import random
-    otp = str(random.randint(100000, 999999))
-    expires = datetime.utcnow() + timedelta(minutes=5)
+    # Generate Verification Token
+    verify_token = secrets.token_urlsafe(32)
+    expires = datetime.utcnow() + timedelta(hours=24)
     
-    # Invalidate old OTPs
+    # Invalidate old tokens
     db.query(OTPDB).filter(OTPDB.email == user.email).delete()
-    db.add(OTPDB(email=user.email, otp_code=otp, expires_at=expires))
+    db.add(OTPDB(email=user.email, otp_code=verify_token, expires_at=expires))
     
     # Audit Log
-    db.add(AuditLogDB(user_id=new_user.id, action="REGISTER_PENDING_OTP"))
+    db.add(AuditLogDB(user_id=new_user.id, action="REGISTER_PENDING_EMAIL"))
     db.commit()
     
-    # Simulate sending email by printing
-    print(f"\n=========================================")
-    print(f"📧 ส่ง OTP ไปที่อีเมล: {user.email}")
-    print(f"🔑 รหัส OTP ของคุณคือ: {otp} (หมดอายุใน 5 นาที)")
-    print(f"=========================================\n")
+    # Send Email
+    background_tasks.add_task(send_verification_email, user.email, verify_token)
     
-    return {"message": "สมัครสมาชิกสำเร็จ กรุณายืนยันรหัส OTP จากอีเมล"}
+    return {"message": "สมัครสมาชิกเบื้องต้นสำเร็จ! กรุณาเช็คอินบอกซ์ของอีเมลเพื่อกดลิงก์ยืนยันบัญชี"}
 
-@app.post("/api/auth/verify-otp")
-def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
-    record = db.query(OTPDB).filter(OTPDB.email == payload.email, OTPDB.otp_code == payload.otp_code).first()
+@app.post("/api/auth/verify-email")
+def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+    record = db.query(OTPDB).filter(OTPDB.otp_code == payload.token).first()
     
     if not record:
-        raise HTTPException(400, detail="รหัส OTP ไม่ถูกต้อง")
+        raise HTTPException(400, detail="ลิงก์ยืนยันไม่ถูกต้องหรือถูกใช้ไปแล้ว")
     if record.expires_at < datetime.utcnow():
-        raise HTTPException(400, detail="รหัส OTP หมดอายุแล้ว")
+        raise HTTPException(400, detail="ลิงก์ยืนยันหมดอายุแล้ว")
         
-    db_user = db.query(UserDB).filter(UserDB.email == payload.email).first()
+    db_user = db.query(UserDB).filter(UserDB.email == record.email).first()
     if not db_user:
         raise HTTPException(404, detail="ไม่พบผู้ใช้งานด้วยอีเมลนี้")
         
     db_user.is_verified = True
-    db.query(OTPDB).filter(OTPDB.email == payload.email).delete()
+    db.query(OTPDB).filter(OTPDB.email == record.email).delete()
     
-    db.add(AuditLogDB(user_id=db_user.id, action="VERIFY_OTP_SUCCESS"))
+    db.add(AuditLogDB(user_id=db_user.id, action="VERIFY_EMAIL_SUCCESS"))
     db.commit()
     
-    return {"message": "ยืนยันตัวตนสำเร็จ"}
+    return {"message": "ยืนยันอีเมลสำเร็จ"}
 
 @app.post("/api/auth/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):

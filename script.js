@@ -142,12 +142,9 @@ async function checkAuth() {
 function toggleAuthMode(mode) {
     loginForm.classList.add('hidden');
     registerForm.classList.add('hidden');
-    document.getElementById('otp-form').classList.add('hidden');
 
     if (mode === 'register') {
         registerForm.classList.remove('hidden');
-    } else if (mode === 'otp') {
-        document.getElementById('otp-form').classList.remove('hidden');
     } else {
         loginForm.classList.remove('hidden');
     }
@@ -187,8 +184,6 @@ async function handleLogin(e) {
     }
 }
 
-let currentOtpEmail = "";
-
 async function handleRegister(e) {
     e.preventDefault();
     const user = document.getElementById('reg-user').value;
@@ -197,8 +192,12 @@ async function handleRegister(e) {
     const email = document.getElementById('reg-email').value;
 
     if (pass !== confirmPass) { alert("รหัสผ่านไม่ตรงกัน"); return; }
+    
+    const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
+    if (!turnstileToken) { alert("กรุณายืนยันตัวตนว่าไม่ใช่บอท"); return; }
+
     const submitBtn = e.target.querySelector('button');
-    submitBtn.innerText = "กำลังบันทึกและส่งรหัส...";
+    submitBtn.innerText = "กำลังดำเนินการ...";
     submitBtn.disabled = true;
 
     try {
@@ -208,54 +207,45 @@ async function handleRegister(e) {
             body: JSON.stringify({ 
                 username: user, 
                 password: pass,
-                email: email
+                email: email,
+                turnstile_token: turnstileToken
             })
         });
         const data = await res.json();
         if (res.ok) {
-            alert('สมัครสมาชิกสำเร็จ! กรุณาตรวจสอบรหัส OTP ในกล่องจดหมายอีเมลของคุณ');
-            currentOtpEmail = email; // Store for verification step
-            document.getElementById('otp-email-desc').textContent = `ส่งรหัสไปยัง: ${email}`;
-            toggleAuthMode('otp');
+            alert('สมัครสมาชิกเบื้องต้นสำเร็จ! กรุณาเช็คอินบอกซ์ของอีเมลเพื่อกดลิงก์ยืนยันบัญชี');
+            toggleAuthMode('login');
         } else {
             alert(data.detail || 'สมัครสมาชิกไม่สำเร็จ');
+            if (typeof turnstile !== 'undefined') turnstile.reset();
         }
     } catch (err) {
         alert('เชื่อมต่อ Server ไม่ได้');
+        if (typeof turnstile !== 'undefined') turnstile.reset();
     } finally {
         submitBtn.innerText = "สมัครสมาชิก";
         submitBtn.disabled = false;
     }
 }
 
-async function handleVerifyOTP(e) {
-    e.preventDefault();
-    const otpCode = document.getElementById('otp-code').value;
-    if (!otpCode || otpCode.length !== 6) return alert('กรอกรหัส 6 หลักให้ครบถ้วน');
-    
-    const submitBtn = e.target.querySelector('button');
-    submitBtn.innerText = "กำลังตรวจสอบ...";
-    submitBtn.disabled = true;
-    
+async function verifyEmail(token) {
     try {
-        const res = await fetch(`${API_URL}/api/auth/verify-otp`, {
+        const res = await fetch(`${API_URL}/api/auth/verify-email`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: currentOtpEmail, otp_code: otpCode })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({token})
         });
         const data = await res.json();
-        if (res.ok) {
-            alert('ยืนยันตัวตนสำเร็จ! ตอนนี้คุณสามารถเข้าสู่ระบบได้แล้ว');
-            toggleAuthMode('login');
-            document.getElementById('login-user').focus();
+        if(res.ok) {
+            alert('ยืนยันอีเมลสำเร็จ! สามารถเข้าสู่ระบบได้เลยครับ');
         } else {
-            alert(data.detail || 'รหัส OTP ไม่ถูกต้อง');
+            alert(data.detail || 'ลิงก์ไม่ถูกต้องหรือหมดอายุ');
         }
-    } catch (err) {
-        alert('เชื่อมต่อ Server ไม่ได้');
-    } finally {
-        submitBtn.innerText = "ยืนยันรหัส";
-        submitBtn.disabled = false;
+        window.location.hash = '#/';
+        toggleAuthMode('login');
+        if (authOverlay) authOverlay.classList.remove('hidden');
+    } catch(e) {
+        alert("ไม่สามารถติดต่อเซิร์ฟเวอร์เพื่อยืนยันอีเมลได้");
     }
 }
 
@@ -821,8 +811,6 @@ function speak(text) {
 // --- Event Listeners ---
 if (loginForm) loginForm.addEventListener('submit', handleLogin);
 if (registerForm) registerForm.addEventListener('submit', handleRegister);
-const otpForm = document.getElementById('otp-form');
-if (otpForm) otpForm.addEventListener('submit', handleVerifyOTP);
 if (logoutBtnMenu) logoutBtnMenu.addEventListener('click', logout);
 if(sendBtn) sendBtn.onclick = handleSend;
 if(btnMic) btnMic.onclick = () => isRecording ? recognition.stop() : recognition.start();
@@ -910,6 +898,12 @@ if (landingInput) {
 function handleHashChange() {
     const defaultHash = '#/';
     let currentHash = window.location.hash || defaultHash;
+    
+    if (currentHash.startsWith('#/verify?token=')) {
+        const token = currentHash.split('=')[1];
+        if (token) verifyEmail(token);
+        return;
+    }
     
     if (currentHash === '#/') {
         _showLandingView();

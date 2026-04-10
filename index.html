@@ -15,6 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   </head>
   <body>
     <div id="auth-overlay" class="auth-overlay">
@@ -89,6 +90,9 @@
               required
             />
           </div>
+          
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAC5K1lDIpXuNhVJZ" style="margin-bottom: 16px;"></div>
+          
           <button type="submit" class="btn-full btn-outline">
             สมัครสมาชิก
           </button>
@@ -98,31 +102,6 @@
           </p>
         </form>
 
-        <form id="otp-form" class="auth-form hidden">
-          <h3 class="auth-title">ยืนยันอีเมล OTP</h3>
-          <p class="auth-desc" id="otp-email-desc">
-            เราได้ส่งรหัส 6 หลักไปที่อีเมลของคุณ
-          </p>
-          <div class="input-group">
-            <span class="material-icons">password</span>
-            <input
-              type="text"
-              id="otp-code"
-              class="otp-input"
-              placeholder="รหัส 6 หลัก"
-              aria-label="รหัส 6 หลัก"
-              maxlength="6"
-              autocomplete="one-time-code"
-              required
-            />
-          </div>
-          <button type="submit" class="btn-full">ยืนยันรหัส</button>
-          <p class="auth-switch">
-            <button type="button" style="background:none; border:none; padding:0; color:var(--accent); font-weight:500; font-size:inherit; font-family:inherit; cursor:pointer; text-decoration:none;" onclick="toggleAuthMode('login')"
-              >กลับเข้าสู่ระบบบัญชีอื่น</button
-            >
-          </p>
-        </form>
       </div>
     </div>
 
