@@ -1,7 +1,7 @@
 // --- Config ---
-const OLLAMA_SERVER = 'http://localhost:8000';
-const API_URL = 'http://localhost:8000'; 
-const MODEL_MULTIMODAL = 'amsaravi/medgemma-4b-it:q8'; 
+const OLLAMA_SERVER = 'https://medgemma.sunsetforyou.com/backend';
+const API_URL = 'https://medgemma.sunsetforyou.com/backend';
+const MODEL_MULTIMODAL = 'amsaravi/medgemma-4b-it:q8';
 const MODEL_TEXT_ONLY = 'amsaravi/medgemma-4b-it:q8';
 let DEFAULT_SYMPTOM_PROMPT = `[SYSTEM MESSAGE: STRICT SINGLE-TURN INTERVIEW PROTOCOL]
 คุณคือผู้ช่วยแพทย์ AI หน้าที่ของคุณคือการซักประวัติผู้ป่วยทีละขั้นตอน
@@ -63,13 +63,13 @@ const menuUserNameEl = document.getElementById('menu-user-name');
 const logoutBtnMenu = document.getElementById('logout-btn-menu');
 const themeToggleMenu = document.getElementById('theme-toggle-menu');
 
-let allChats = {}; 
+let allChats = {};
 let currentChatId = null;
-let currentChatType = 'multimodal'; 
+let currentChatType = 'multimodal';
 let recognition;
 let synth = window.speechSynthesis;
 let isRecording = false;
-let isVoiceModeOn = false; 
+let isVoiceModeOn = false;
 let autoListening = false;
 let thaiVoice = null;
 let silenceTimer = null; // To automatically stop/send after silence in voice mode
@@ -93,7 +93,7 @@ async function authFetch(url, options = {}) {
 function updateSendButtonState() {
     const text = promptEl.value.trim();
     const hasImages = previewsEl && previewsEl.children.length > 0;
-    
+
     if (text.length > 0 || hasImages) {
         sendBtn.removeAttribute('disabled');
         sendBtn.classList.add('enabled');
@@ -114,12 +114,12 @@ async function checkAuth() {
             const data = await res.json();
             authOverlay.classList.add('hidden');
             const displayName = data.full_name || data.username;
-            if(currentUserNameEl) currentUserNameEl.textContent = displayName;
-            if(menuUserNameEl) menuUserNameEl.textContent = displayName;
+            if (currentUserNameEl) currentUserNameEl.textContent = displayName;
+            if (menuUserNameEl) menuUserNameEl.textContent = displayName;
             // Store role globally if needed
             window.currentUserRole = data.role;
             syncChats();
-            
+
             // Fetch profile for avatar
             try {
                 const profileRes = await authFetch('/api/profile');
@@ -130,7 +130,7 @@ async function checkAuth() {
                         updateDropdownAvatar(pData.profile_picture_url);
                     }
                 }
-            } catch (e) {}
+            } catch (e) { }
 
             return;
         }
@@ -156,7 +156,7 @@ async function handleLogin(e) {
     const pass = document.getElementById('login-pass').value;
     const submitBtn = e.target.querySelector('button');
     const originalBtnText = submitBtn.innerText;
-    
+
     submitBtn.innerText = "กำลังเข้าสู่ระบบ...";
     submitBtn.disabled = true;
 
@@ -192,7 +192,7 @@ async function handleRegister(e) {
     const email = document.getElementById('reg-email').value;
 
     if (pass !== confirmPass) { alert("รหัสผ่านไม่ตรงกัน"); return; }
-    
+
     const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
     if (!turnstileToken) { alert("กรุณายืนยันตัวตนว่าไม่ใช่บอท"); return; }
 
@@ -204,8 +204,8 @@ async function handleRegister(e) {
         const res = await fetch(`${API_URL}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                username: user, 
+            body: JSON.stringify({
+                username: user,
                 password: pass,
                 email: email,
                 turnstile_token: turnstileToken
@@ -232,11 +232,11 @@ async function verifyEmail(token) {
     try {
         const res = await fetch(`${API_URL}/api/auth/verify-email`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({token})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
         });
         const data = await res.json();
-        if(res.ok) {
+        if (res.ok) {
             alert('ยืนยันอีเมลสำเร็จ! สามารถเข้าสู่ระบบได้เลยครับ');
         } else {
             alert(data.detail || 'ลิงก์ไม่ถูกต้องหรือหมดอายุ');
@@ -244,7 +244,7 @@ async function verifyEmail(token) {
         window.location.hash = '#/';
         toggleAuthMode('login');
         if (authOverlay) authOverlay.classList.remove('hidden');
-    } catch(e) {
+    } catch (e) {
         alert("ไม่สามารถติดต่อเซิร์ฟเวอร์เพื่อยืนยันอีเมลได้");
     }
 }
@@ -252,7 +252,7 @@ async function verifyEmail(token) {
 function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('username');
-    location.reload(); 
+    location.reload();
 }
 
 // --- Database Logic ---
@@ -267,7 +267,7 @@ async function syncChats() {
 async function saveCurrentChat() {
     if (!currentChatId || !allChats[currentChatId]) return;
     const chatData = allChats[currentChatId];
-    
+
     if (chatData.isNewToServer) {
         const res = await authFetch('/api/chats', {
             method: 'POST',
@@ -283,7 +283,7 @@ async function saveCurrentChat() {
 }
 
 window.deleteChat = async (id) => {
-    if(!confirm('ลบแชทนี้?')) return;
+    if (!confirm('ลบแชทนี้?')) return;
     const res = await authFetch(`/api/chats/${id}`, { method: 'DELETE' });
     if (res && (res.ok || res.status === 404)) {
         delete allChats[id];
@@ -296,7 +296,7 @@ window.deleteChat = async (id) => {
 
 // --- Chat Core Logic ---
 function startChat(type) {
-    if(synth.speaking) synth.cancel();
+    if (synth.speaking) synth.cancel();
 
     // ลบแชทเปล่าก่อนหน้า
     if (currentChatId && allChats[currentChatId] && allChats[currentChatId].messages.length <= 1) {
@@ -304,38 +304,38 @@ function startChat(type) {
     }
 
     currentChatType = type;
-    currentChatId = Date.now().toString(); 
-    
+    currentChatId = Date.now().toString();
+
     landingView.classList.add('hidden');
     if (profileView) profileView.classList.add('hidden');
     if (settingsView) settingsView.classList.add('hidden');
     chatPanel.classList.remove('hidden');
-    historyEl.innerHTML = ''; 
-    promptEl.value = ''; 
+    historyEl.innerHTML = '';
+    promptEl.value = '';
     promptEl.style.height = '40px'; // Reset height
     previewsEl.innerHTML = '';
     updateSendButtonState();
-    
+
     updateUI(type);
     let firstMsg = type === 'multimodal' ? 'สวัสดีครับ เชิญแนบรูปภาพหรือบอกอาการได้เลยครับ' : 'สวัสดีครับ ผมคือ AI ช่วยซักประวัติ กรุณาเล่าอาการของคุณครับ';
-    
+
     addMessage('assistant', firstMsg);
-    
-    allChats[currentChatId] = { 
+
+    allChats[currentChatId] = {
         id: currentChatId,
-        title: type === 'multimodal' ? 'แชทวิเคราะห์' : 'ซักประวัติผู้ป่วย', 
-        type: type, 
+        title: type === 'multimodal' ? 'แชทวิเคราะห์' : 'ซักประวัติผู้ป่วย',
+        type: type,
         messages: [{ role: 'assistant', content: firstMsg }],
         isNewToServer: true
     };
-    
-    renderRecentList(); 
-    if(isVoiceModeOn) speak(firstMsg);
+
+    renderRecentList();
+    if (isVoiceModeOn) speak(firstMsg);
 }
 
 function loadChat(id) {
     if (!allChats[id]) return;
-    
+
     // Lazy load messages if they aren't loaded yet
     if (!allChats[id].messages || allChats[id].messages.length === 0) {
         authFetch(`/api/chats/${id}`).then(async (res) => {
@@ -383,7 +383,7 @@ function updateUI(type) {
 async function handleSend() {
     if (synth.speaking) { synth.cancel(); return; }
     if (recognition) recognition.stop();
-    isRecording = false; 
+    isRecording = false;
 
     const text = promptEl.value.trim();
     const images = Array.from(previewsEl.querySelectorAll('img')).map(i => i.src);
@@ -391,17 +391,17 @@ async function handleSend() {
 
     addMessage('user', text, images);
     const userMsgData = { role: 'user', content: text, images: images };
-    
-    if(!allChats[currentChatId]) startChat(currentChatType);
+
+    if (!allChats[currentChatId]) startChat(currentChatType);
     allChats[currentChatId].messages.push(userMsgData);
-    await saveCurrentChat(); 
+    await saveCurrentChat();
 
     // Reset UI
-    promptEl.value = ''; 
+    promptEl.value = '';
     promptEl.style.height = '40px';
-    previewsEl.innerHTML = ''; 
+    previewsEl.innerHTML = '';
     updateSendButtonState();
-    
+
     addPlaceholder();
 
     try {
@@ -415,46 +415,46 @@ async function handleSend() {
 
         let systemInstruction = currentChatType === 'multimodal' ? VISION_PROMPT : SYMPTOM_PROMPT;
         const finalMessages = [{ role: 'system', content: systemInstruction }, ...historyMessages];
-        
+
         const modelToUse = currentChatType === 'multimodal' ? MODEL_MULTIMODAL : MODEL_TEXT_ONLY;
 
-        const res = await fetch(`${API_URL}/api/chat`, { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ model: modelToUse, messages: finalMessages }) 
+        const res = await fetch(`${API_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: modelToUse, messages: finalMessages })
         });
-        
+
         const data = await res.json();
         removePlaceholder();
         const aiResponse = data.message?.content || "ขออภัย ระบบไม่ได้รับคำตอบ";
-        
+
         addMessage('assistant', aiResponse);
         allChats[currentChatId].messages.push({ role: 'assistant', content: aiResponse });
         await saveCurrentChat();
 
         if (isVoiceModeOn) speak(aiResponse);
     } catch (err) {
-        removePlaceholder(); 
-        addMessage('assistant', `เกิดข้อผิดพลาด: ${err.message}`); 
+        removePlaceholder();
+        addMessage('assistant', `เกิดข้อผิดพลาด: ${err.message}`);
     }
 }
 
 // --- UI Utilities ---
 function addMessage(role, text, images = []) {
-    const msgDiv = document.createElement('div'); 
+    const msgDiv = document.createElement('div');
     msgDiv.className = `message ${role}`;
     const bubble = document.createElement('div'); bubble.className = 'bubble';
-    
-    if(images.length > 0) {
-        images.forEach(src => { 
-            const img = document.createElement('img'); img.src = src; bubble.appendChild(img); 
+
+    if (images.length > 0) {
+        images.forEach(src => {
+            const img = document.createElement('img'); img.src = src; bubble.appendChild(img);
         });
     }
     bubble.innerHTML += text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     const avatar = document.createElement('div'); avatar.className = 'avatar';
     avatar.innerHTML = role === 'user' ? '<span class="material-icons">person</span>' : '<span class="material-icons">smart_toy</span>';
-    
-    if (role === 'user') { msgDiv.appendChild(bubble); msgDiv.appendChild(avatar); } 
+
+    if (role === 'user') { msgDiv.appendChild(bubble); msgDiv.appendChild(avatar); }
     else { msgDiv.appendChild(avatar); msgDiv.appendChild(bubble); }
     historyEl.appendChild(msgDiv); scrollToBottom();
 }
@@ -495,7 +495,7 @@ function _showLandingView() {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     currentChatId = null;
     renderRecentList();
-    if(window.innerWidth <= 900) document.querySelector('.app').classList.remove('sidebar-open');
+    if (window.innerWidth <= 900) document.querySelector('.app').classList.remove('sidebar-open');
 }
 
 async function showProfilePage() {
@@ -510,16 +510,16 @@ async function _renderProfileView() {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('nav-profile-btn')?.classList.add('active');
     currentChatId = null;
-    
+
     const username = document.getElementById('current-user-name').textContent || 'Unknown User';
     const role = window.currentUserRole || 'user';
-    
+
     const profilePageUsername = document.getElementById('profile-page-username');
     const profileRole = document.querySelector('.profile-role');
-    
+
     if (profilePageUsername) profilePageUsername.textContent = username;
     if (profileRole) profileRole.textContent = `ระดับสิทธิ์: ${role.toUpperCase()}`;
-    
+
     try {
         const res = await fetch(`${API_URL}/api/profile`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
@@ -530,7 +530,7 @@ async function _renderProfileView() {
             document.getElementById('profile-lastname').value = data.last_name || '';
             document.getElementById('profile-phone').value = data.phone || '';
             document.getElementById('profile-bio').value = data.bio || '';
-            
+
             const avatarPreview = document.getElementById('profile-pic-preview');
             const avatarIcon = document.getElementById('profile-pic-icon');
             if (data.profile_picture_url) {
@@ -563,7 +563,7 @@ async function _renderSettingsView() {
 
     const settingSymptomPrompt = document.getElementById('setting-symptom-prompt');
     const settingVisionPrompt = document.getElementById('setting-vision-prompt');
-    
+
     try {
         const res = await fetch(`${API_URL}/api/prompts`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
@@ -586,17 +586,17 @@ async function _renderSettingsView() {
 async function savePrompts() {
     const settingSymptomPrompt = document.getElementById('setting-symptom-prompt');
     const settingVisionPrompt = document.getElementById('setting-vision-prompt');
-    
+
     if (settingSymptomPrompt && settingVisionPrompt) {
         SYMPTOM_PROMPT = settingSymptomPrompt.value.trim() || DEFAULT_SYMPTOM_PROMPT;
         VISION_PROMPT = settingVisionPrompt.value.trim() || DEFAULT_VISION_PROMPT;
-        
+
         try {
             const res = await fetch(`${API_URL}/api/prompts`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}` 
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: JSON.stringify({
                     symptom_prompt: SYMPTOM_PROMPT,
@@ -608,18 +608,18 @@ async function savePrompts() {
                 window.location.reload();
             }
             else alert("บันทึกไม่สำเร็จ");
-        } catch(err) {
+        } catch (err) {
             alert("เชื่อมต่อ Server ไม่ได้");
         }
     }
 }
 
 function resetPrompts() {
-    if(!confirm("ต้องการคืนค่า Prompt กลับเป็นค่าเริ่มต้นหรือไม่?")) return;
-    
+    if (!confirm("ต้องการคืนค่า Prompt กลับเป็นค่าเริ่มต้นหรือไม่?")) return;
+
     const settingSymptomPrompt = document.getElementById('setting-symptom-prompt');
     const settingVisionPrompt = document.getElementById('setting-vision-prompt');
-    
+
     if (settingSymptomPrompt && settingVisionPrompt) {
         settingSymptomPrompt.value = DEFAULT_SYMPTOM_PROMPT;
         settingVisionPrompt.value = DEFAULT_VISION_PROMPT;
@@ -666,13 +666,13 @@ async function saveProfile() {
     const last_name = document.getElementById('profile-lastname').value;
     const phone = document.getElementById('profile-phone').value;
     const bio = document.getElementById('profile-bio').value;
-    
+
     try {
         const res = await fetch(`${API_URL}/api/profile`, {
             method: 'PUT',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('access_token')}` 
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
             },
             body: JSON.stringify({
                 first_name: first_name || null,
@@ -687,7 +687,7 @@ async function saveProfile() {
             window.location.reload();
         }
         else alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
-    } catch(err) {
+    } catch (err) {
         alert('เชื่อมต่อ Server ไม่ได้');
     }
 }
@@ -696,9 +696,9 @@ async function saveProfile() {
 function loadThaiVoice() {
     let voices = synth.getVoices();
     // Try to find the best Thai voice, particularly Google's
-    thaiVoice = voices.find(v => v.lang === 'th-TH' && v.name.includes('Google')) || 
-                voices.find(v => v.lang === 'th-TH') || 
-                voices.find(v => v.lang.startsWith('th'));
+    thaiVoice = voices.find(v => v.lang === 'th-TH' && v.name.includes('Google')) ||
+        voices.find(v => v.lang === 'th-TH') ||
+        voices.find(v => v.lang.startsWith('th'));
 }
 
 if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -709,20 +709,20 @@ function initVoice() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
-        
-        recognition.lang = 'th-TH'; 
+
+        recognition.lang = 'th-TH';
         recognition.continuous = true; // Use continuous so it doesn't cut off easily
         recognition.interimResults = true; // Show results while talking
-        
-        recognition.onstart = () => { 
-            isRecording = true; 
-            btnMic.classList.add('listening'); 
+
+        recognition.onstart = () => {
+            isRecording = true;
+            btnMic.classList.add('listening');
         };
-        
-        recognition.onresult = (e) => { 
+
+        recognition.onresult = (e) => {
             let interimTranscript = '';
             let finalTranscript = '';
-            
+
             for (let i = e.resultIndex; i < e.results.length; ++i) {
                 if (e.results[i].isFinal) {
                     finalTranscript += e.results[i][0].transcript;
@@ -730,7 +730,7 @@ function initVoice() {
                     interimTranscript += e.results[i][0].transcript;
                 }
             }
-            
+
             // Build the string
             if (finalTranscript || interimTranscript) {
                 promptEl.value = finalTranscript + interimTranscript;
@@ -751,18 +751,18 @@ function initVoice() {
 
         recognition.onerror = (e) => {
             console.error('Speech recognition error', e.error);
-            if(e.error === 'no-speech' && isVoiceModeOn && !synth.speaking) {
+            if (e.error === 'no-speech' && isVoiceModeOn && !synth.speaking) {
                 // If it timed out but we are in continuous mode, restart
-                try { recognition.start(); } catch(err){}
+                try { recognition.start(); } catch (err) { }
             }
         };
 
-        recognition.onend = () => { 
-            isRecording = false; 
-            btnMic.classList.remove('listening'); 
+        recognition.onend = () => {
+            isRecording = false;
+            btnMic.classList.remove('listening');
             // Restart if we are in voice mode and the system is not speaking
-            if(isVoiceModeOn && !synth.speaking) {
-                try { recognition.start(); } catch(err){}
+            if (isVoiceModeOn && !synth.speaking) {
+                try { recognition.start(); } catch (err) { }
             }
         };
     } else {
@@ -776,35 +776,35 @@ function speak(text) {
     if (synth.speaking) {
         synth.cancel();
     }
-    
+
     // Remove markdown formatting symbols for speech
     const cleanText = text.replace(/[*_#`~]+/g, '').replace(/---/g, '');
-    
+
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'th-TH';
-    
+
     // Optimize speech parameters to sound less robotic
     utterance.rate = 1.05; // Slightly faster than default
     utterance.pitch = 1.1; // Slightly higher pitch
-    
+
     if (!thaiVoice) loadThaiVoice();
     if (thaiVoice) utterance.voice = thaiVoice;
-    
-    utterance.onend = () => { 
+
+    utterance.onend = () => {
         // Once AI finishes speaking, open mic again if in voice loop mode
-        if(isVoiceModeOn) {
+        if (isVoiceModeOn) {
             promptEl.value = ''; // Clean prompt
-            try { recognition.start(); } catch(e){}
+            try { recognition.start(); } catch (e) { }
         }
     };
-    
+
     utterance.onerror = (e) => {
         console.error('Speech synthesis error', e);
-        if(isVoiceModeOn) {
-            try { recognition.start(); } catch(err){}
+        if (isVoiceModeOn) {
+            try { recognition.start(); } catch (err) { }
         }
     }
-    
+
     synth.speak(utterance);
 }
 
@@ -812,9 +812,9 @@ function speak(text) {
 if (loginForm) loginForm.addEventListener('submit', handleLogin);
 if (registerForm) registerForm.addEventListener('submit', handleRegister);
 if (logoutBtnMenu) logoutBtnMenu.addEventListener('click', logout);
-if(sendBtn) sendBtn.onclick = handleSend;
-if(btnMic) btnMic.onclick = () => isRecording ? recognition.stop() : recognition.start();
-if(btnVoiceMode) btnVoiceMode.onclick = () => { isVoiceModeOn = !isVoiceModeOn; btnVoiceMode.classList.toggle('voice-active'); if(isVoiceModeOn) recognition.start(); else recognition.stop(); };
+if (sendBtn) sendBtn.onclick = handleSend;
+if (btnMic) btnMic.onclick = () => isRecording ? recognition.stop() : recognition.start();
+if (btnVoiceMode) btnVoiceMode.onclick = () => { isVoiceModeOn = !isVoiceModeOn; btnVoiceMode.classList.toggle('voice-active'); if (isVoiceModeOn) recognition.start(); else recognition.stop(); };
 if (toggleBtn) toggleBtn.onclick = () => document.querySelector('.app').classList.toggle('sidebar-collapsed');
 
 // Mobile Overlay Click to Close Sidebar
@@ -822,7 +822,7 @@ document.addEventListener('click', (e) => {
     const appElement = document.querySelector('.app');
     const sidebar = document.querySelector('.sidebar');
     const mobileBtn = document.getElementById('mobile-menu-btn');
-    
+
     // Check if we are on mobile (sidebar is fixed via media query)
     if (window.innerWidth <= 900 && appElement.classList.contains('sidebar-open')) {
         // If click is outside sidebar and NOT the toggle switch itself
@@ -833,19 +833,19 @@ document.addEventListener('click', (e) => {
 });
 
 // Auto-resize Prompt & Button State
-promptEl.addEventListener('input', function() {
-    this.style.height = '40px'; 
+promptEl.addEventListener('input', function () {
+    this.style.height = '40px';
     this.style.height = (this.scrollHeight) + 'px';
     if (this.value.trim() !== "") this.classList.add('scroll-active');
     else this.classList.remove('scroll-active');
     updateSendButtonState();
 });
 
-promptEl.addEventListener('keydown', (e) => { 
-    if (e.key === 'Enter' && !e.shiftKey) { 
-        e.preventDefault(); 
-        handleSend(); 
-    } 
+promptEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+    }
 });
 
 if (profileTrigger) profileTrigger.onclick = (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); };
@@ -857,10 +857,10 @@ if (brandLogo) brandLogo.addEventListener('click', showLandingPage);
 // Watch for file additions
 fileInput.addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(f => {
-        const r = new FileReader(); 
-        r.onload = (ev) => { 
-            previewsEl.innerHTML += `<div class="preview"><img src="${ev.target.result}"><div class="rm" onclick="this.parentElement.remove()">✕</div></div>`; 
-        }; 
+        const r = new FileReader();
+        r.onload = (ev) => {
+            previewsEl.innerHTML += `<div class="preview"><img src="${ev.target.result}"><div class="rm" onclick="this.parentElement.remove()">✕</div></div>`;
+        };
         r.readAsDataURL(f);
     });
 });
@@ -869,7 +869,7 @@ fileInput.addEventListener('change', (e) => {
 const observer = new MutationObserver(() => {
     updateSendButtonState();
 });
-if(previewsEl) {
+if (previewsEl) {
     observer.observe(previewsEl, { childList: true });
 }
 
@@ -890,7 +890,7 @@ if (landingInput) {
             }, 300); // Give hash change a moment to render the chat view
         };
         reader.readAsDataURL(file);
-        landingInput.value = ''; 
+        landingInput.value = '';
     });
 }
 
@@ -898,13 +898,13 @@ if (landingInput) {
 function handleHashChange() {
     const defaultHash = '#/';
     let currentHash = window.location.hash || defaultHash;
-    
+
     if (currentHash.startsWith('#/verify?token=')) {
         const token = currentHash.split('=')[1];
         if (token) verifyEmail(token);
         return;
     }
-    
+
     if (currentHash === '#/') {
         _showLandingView();
     } else if (currentHash === '#/profile') {
@@ -914,7 +914,7 @@ function handleHashChange() {
     } else if (currentHash.startsWith('#/chat/')) {
         const parts = currentHash.split('/');
         const idOrMode = parts[2];
-        
+
         if (idOrMode === 'multimodal' || idOrMode === 'symptom') {
             startChat(idOrMode === 'multimodal' ? 'multimodal' : 'symptom_check');
         } else {
@@ -940,7 +940,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateThemeIcon(isLight) {
         if (!themeToggleMenu) return;
         const themeIcon = themeToggleMenu.querySelector('.material-icons');
-        if(themeIcon) {
+        if (themeIcon) {
             themeIcon.textContent = isLight ? 'dark_mode' : 'light_mode';
         }
     }
@@ -950,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             const currentTheme = htmlEl.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
+
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('app-theme', newTheme);
             updateThemeIcon(newTheme === 'light');
@@ -958,8 +958,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initVoice();
-    initTheme(); 
-    checkAuth(); 
+    initTheme();
+    checkAuth();
     handleHashChange(); // Trigger router on load
     updateSendButtonState(); // Initial check
 });

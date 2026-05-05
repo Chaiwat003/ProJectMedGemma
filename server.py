@@ -128,6 +128,8 @@ SMTP_USERNAME = "medgemma.noreply@gmail.com"
 SMTP_PASSWORD = "kbrykdmfixzmgkjy"
 TURNSTILE_SECRET_KEY = "0x4AAAAAAC5K1oz7MF5glndb0hWD8FaQvNw"
 
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -216,7 +218,7 @@ def send_verification_email(receiver_email: str, token: str):
         msg["To"] = receiver_email
         msg["Subject"] = "ยืนยันอีเมลสำหรับบัญชี MedGemma ของคุณ"
         
-        verify_url = f"http://localhost:5500/#/verify?token={token}"
+        verify_url = f"https://medgemma.sunsetforyou.com/#/verify?token={token}"
         
         html_body = f"""
         <html>
@@ -568,24 +570,19 @@ def delete_chat(chat_id: str, user: str = Depends(get_current_user), db: Session
 # --- 🔥 Ollama Connection 🔥 ---
 @app.post("/api/chat")
 async def chat_with_ollama(request: OllamaRequest):
-    # เชื่อมต่อกับ Ollama ที่รันในเครื่อง (Port 11434)
     OLLAMA_URL = "http://localhost:11434/api/chat"
-    
     try:
-        # Timeout นานๆ เผื่อเครื่องประมวลผลช้า
         async with httpx.AsyncClient(timeout=120.0) as client:
             print(f"[Info] กำลังส่งข้อมูลไป Ollama Model: {request.model}")
-            
-            response = await client.post(
-                OLLAMA_URL, 
-                json=request.dict()
-            )
+            response = await client.post(OLLAMA_URL, json=request.dict())
             response.raise_for_status()
             return response.json()
-            
     except Exception as e:
-        print(f"[Error] Error connecting to Ollama: {e}")
-        raise HTTPException(status_code=500, detail=f"Ollama Error: เชื่อมต่อ AI ไม่ได้ (กรุณาเช็คว่าเปิด Ollama หรือยัง?)")
+        error_msg = str(e)
+        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            error_msg = f"{e} - {e.response.text}"
+        print(f"[Error] Error connecting to Ollama: {error_msg}")
+        raise HTTPException(status_code=500, detail=f"Ollama Error: เชื่อมต่อ AI ไม่ได้ ({error_msg})")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
